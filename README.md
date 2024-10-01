@@ -11,9 +11,14 @@ pip install transformers torch scikit-learn pandas flask
 python3 train_sentiment.py
 ```
 
-### Invoke API
+### Run API
+```sh
+python3 predict_api.py
 ```
-curl --location 'http://localhost:8080/api/v1/sentiment/analyze' \
+
+### Invoke API & test
+```
+curl --location 'http://localhost:8000/api/v1/sentiment/analyze' \
 --header 'Content-Type: application/json' \
---data '"This is a fantastic product! I love it."'
+--data '{"text": "The movie was amazing, I really enjoyed it!"}'
 ```
