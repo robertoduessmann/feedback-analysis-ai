@@ -3,7 +3,7 @@
 
 ### Donwload deps
 ```sh
-pip install transformers torch scikit-learn pandas
+pip install transformers torch scikit-learn pandas flask
 ```
 
 ### Train the Model

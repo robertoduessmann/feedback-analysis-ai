@@ -1,0 +1,47 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# PyCharm project files
+.idea/
+
+# VS Code settings
+.vscode/
+
+# Model files
+*.bin
+*.pt
+/sentiment_model/
+/results/
+
+# Data files
+*.tar.gz
+*.csv
+*.tsv
+
+# Logs
+*.log
+logs/
+
+# Python environment variables
+*.env
+
+# System-specific files
+.DS_Store
+Thumbs.db
+
+# Uvicorn log files
+*.uvicorn.log
+
+# Flask-specific files
+instance/
+*.db

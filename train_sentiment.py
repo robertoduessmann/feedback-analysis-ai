@@ -1,15 +1,34 @@
+import os
+import tarfile
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from transformers import BertForSequenceClassification, BertTokenizer, Trainer, TrainingArguments
 import torch
+from sklearn.model_selection import train_test_split
+from transformers import BertTokenizer, BertForSequenceClassification, Trainer, TrainingArguments
 
-# Load IMDb dataset (or any sentiment dataset you prefer)
-dataset = pd.read_csv('https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz', delimiter='\t')
-# Filter out only a few records (e.g., 10,000 for quick training)
-dataset = dataset.sample(n=1000)
+# Extract the dataset
+with tarfile.open('/Users/robertoduessmann/Downloads/aclImdb_v1.tar.gz', 'r:gz') as tar:
+    tar.extractall('/Users/robertoduessmann/Downloads/aclImdb/')
+
+# Load IMDb dataset (manually processing positive and negative reviews)
+def load_imdb_data(data_dir):
+    data = {"text": [], "label": []}
+    for label, sentiment in enumerate(["neg", "pos"]):
+        folder = os.path.join(data_dir, sentiment)
+        for filename in os.listdir(folder):
+            if filename.endswith(".txt"):
+                with open(os.path.join(folder, filename), encoding="utf-8") as f:
+                    data["text"].append(f.read())
+                    data["label"].append(label)
+    return pd.DataFrame(data)
+
+# Load train dataset
+train_data = load_imdb_data('/Users/robertoduessmann/Downloads/aclImdb/train')
+
+# Filter out only a few records (e.g., 1,000 for quick training)
+train_data = train_data.sample(n=1000, random_state=42)
 
 # Preprocess data
-train_texts, val_texts, train_labels, val_labels = train_test_split(dataset['text'], dataset['label'], test_size=0.1)
+train_texts, val_texts, train_labels, val_labels = train_test_split(train_data['text'], train_data['label'], test_size=0.1, random_state=42)
 
 # Tokenization
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -24,7 +43,7 @@ class IMDbDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         item = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
-        item['labels'] = torch.tensor(self.labels[idx])
+        item['labels'] = torch.tensor(self.labels.iloc[idx])
         return item
 
     def __len__(self):
@@ -34,7 +53,7 @@ train_dataset = IMDbDataset(train_encodings, train_labels)
 val_dataset = IMDbDataset(val_encodings, val_labels)
 
 # Model and Training
-model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
+model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=2)
 
 training_args = TrainingArguments(
     output_dir='./results',
@@ -44,6 +63,7 @@ training_args = TrainingArguments(
     warmup_steps=500,
     weight_decay=0.01,
     logging_dir='./logs',
+    evaluation_strategy="epoch",
 )
 
 trainer = Trainer(
@@ -54,9 +74,7 @@ trainer = Trainer(
 )
 
 trainer.train()
-try:
-    model.save_pretrained("/Users/robertoduessmann/work/workspace/feedback-analysis-ai/sentiment_model")
-    print("Model saved successfully.")
-except Exception as e:
-    print(f"Error saving model: {e}")
-tokenizer.save_pretrained("/Users/robertoduessmann/work/workspace/feedback-analysis-ai/sentiment_model")
+
+# Save the trained model and tokenizer
+model.save_pretrained("./sentiment_model")
+tokenizer.save_pretrained("./sentiment_model")
