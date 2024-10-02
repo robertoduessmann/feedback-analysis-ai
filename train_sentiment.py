@@ -1,15 +1,20 @@
 import os
 import tarfile
-import pandas as pd
 import torch
+import requests
+import io
+import pandas as pd
 from sklearn.model_selection import train_test_split
 from transformers import BertTokenizer, BertForSequenceClassification, Trainer, TrainingArguments
 
 # Extract the dataset
-with tarfile.open('/Users/robertoduessmann/Downloads/aclImdb_v1.tar.gz', 'r:gz') as tar:
-    tar.extractall('/Users/robertoduessmann/Downloads/aclImdb/')
+url = 'https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz'
+with tarfile.open(fileobj=io.BytesIO(requests.get(url).content), mode='r:gz') as tar:
+    tar.extractall('.')
 
 # Load IMDb dataset (manually processing positive and negative reviews)
+
+
 def load_imdb_data(data_dir):
     data = {"text": [], "label": []}
     for label, sentiment in enumerate(["neg", "pos"]):
@@ -21,39 +26,48 @@ def load_imdb_data(data_dir):
                     data["label"].append(label)
     return pd.DataFrame(data)
 
+
 # Load train dataset
-train_data = load_imdb_data('/Users/robertoduessmann/Downloads/aclImdb/train')
+train_data = load_imdb_data('./aclImdb/train')
 
 # Filter out only a few records (e.g., 1,000 for quick training)
 train_data = train_data.sample(n=1000, random_state=42)
 
 # Preprocess data
-train_texts, val_texts, train_labels, val_labels = train_test_split(train_data['text'], train_data['label'], test_size=0.1, random_state=42)
+train_texts, val_texts, train_labels, val_labels = train_test_split(
+    train_data['text'], train_data['label'], test_size=0.1, random_state=42)
 
 # Tokenization
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-train_encodings = tokenizer(train_texts.to_list(), truncation=True, padding=True, max_length=512)
-val_encodings = tokenizer(val_texts.to_list(), truncation=True, padding=True, max_length=512)
+train_encodings = tokenizer(train_texts.to_list(
+), truncation=True, padding=True, max_length=512)
+val_encodings = tokenizer(
+    val_texts.to_list(), truncation=True, padding=True, max_length=512)
 
 # Create torch dataset
+
+
 class IMDbDataset(torch.utils.data.Dataset):
     def __init__(self, encodings, labels):
         self.encodings = encodings
         self.labels = labels
 
     def __getitem__(self, idx):
-        item = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
+        item = {key: torch.tensor(val[idx])
+                for key, val in self.encodings.items()}
         item['labels'] = torch.tensor(self.labels.iloc[idx])
         return item
 
     def __len__(self):
         return len(self.labels)
 
+
 train_dataset = IMDbDataset(train_encodings, train_labels)
 val_dataset = IMDbDataset(val_encodings, val_labels)
 
 # Model and Training
-model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=2)
+model = BertForSequenceClassification.from_pretrained(
+    'bert-base-uncased', num_labels=2)
 
 training_args = TrainingArguments(
     output_dir='./results',

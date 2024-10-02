@@ -22,6 +22,7 @@ env/
 *.pt
 /sentiment_model/
 /results/
+/aclImdb/
 
 # Data files
 *.tar.gz

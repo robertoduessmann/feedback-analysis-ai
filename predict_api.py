@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify
 from transformers import BertTokenizer, BertForSequenceClassification
 import torch
-from predict import predict_sentiment 
+from predict import predict_sentiment
 
 # Initialize Flask app
 app = Flask(__name__)
+
 
 @app.route('/api/v1/sentiment/analyze', methods=['POST'])
 def predict():
@@ -14,6 +15,7 @@ def predict():
 
     sentiment = predict_sentiment(data['text'])
     return jsonify({"sentiment": sentiment})
+
 
 # Run the Flask server
 if __name__ == '__main__':
