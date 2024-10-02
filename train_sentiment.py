@@ -13,8 +13,6 @@ with tarfile.open(fileobj=io.BytesIO(requests.get(url).content), mode='r:gz') as
     tar.extractall('.')
 
 # Load IMDb dataset (manually processing positive and negative reviews)
-
-
 def load_imdb_data(data_dir):
     data = {"text": [], "label": []}
     for label, sentiment in enumerate(["neg", "pos"]):
