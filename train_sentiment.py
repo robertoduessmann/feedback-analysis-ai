@@ -43,8 +43,6 @@ val_encodings = tokenizer(
     val_texts.to_list(), truncation=True, padding=True, max_length=512)
 
 # Create torch dataset
-
-
 class IMDbDataset(torch.utils.data.Dataset):
     def __init__(self, encodings, labels):
         self.encodings = encodings
